@@ -19,6 +19,7 @@ options(scipen=999)
 
 # Default options for code chunks
 knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
+knitr::clean_cache()
 
 #######################################
 # Convenience functions
@@ -43,7 +44,7 @@ my_theme <- function(x) {
     plot.subtitle = element_text(hjust = 0.5, face = "italic"),
     axis.title = element_text(size = 14),
     axis.text = element_text(size = 12),
-    aspect.ratio = 1.78
+    panel.spacing.x = unit(1, "cm")
   )
 }
 
@@ -180,12 +181,12 @@ weekdata[, `:=`(mean_steps = mean(imputed, na.rm = TRUE),
                 time = id_to_time(interval)),
      by = .(interval, type)]
 # Select columns we're interested in
-cols = c('date', 'interval', 'time', 'mean_steps', 'type')
+cols = c('date', 'time', 'mean_steps')
 # Aggregate for plotting
-weekdata[, .SD[1L], by = .(interval, type), .SDcols = cols]
+test <- weekdata[, .SD[1L], by = .(interval, type), .SDcols = cols]
 
 # Plot by panel
-weekdata %>% ggplot(aes(x = time, y = mean_steps)) +
+test %>% ggplot(aes(x = time, y = mean_steps)) +
   geom_line() + 
   facet_wrap(vars(type), labeller = label_value) + 
   labs(x = "Time of day (in 5-min increments)",
