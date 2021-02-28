@@ -5,32 +5,19 @@ output:
     keep_md: true
 ---
 
-```{r setup, echo=FALSE, message=FALSE}
-library(tidyverse)
-library(ggplot2)
-library(hms)
 
-# Reduce precision (we're working with actual steps, after all) and disable
-# scientific notation (for now)
-options(digits=1)
-options(scipen=999)
-
-# Default options for code chunks
-knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
-
-```
 
 ### Loading and preprocessing the data
 
-```{r load_data}
 
+```r
 odata <- read_csv('data/activity.csv')
-
 ```
 
 ### Histogram of the total number of steps for each day
 
-```{r histo}
+
+```r
 daily <- odata %>%
     group_by(date) %>% 
     summarize(total = sum(steps))
@@ -40,28 +27,29 @@ daily %>%
   ggplot(aes(x = total)) +
   geom_histogram(binwidth = 2000) +
   labs(x = "No. of daily steps", y = "No. of days")
-    
 ```
+
+![](PA1_template_files/figure-html/histo-1.png)<!-- -->
 
 ### Mean and median number of steps per day:
 
-```{r mean-median}
+
+```r
 # Mean/median values
 day_mean <- mean(daily$total, na.rm = TRUE) %>% round()
 day_median <- median(daily$total, na.rm = TRUE) %>% round()
-
 ```
 
 
-Mean steps taken per day: **`r day_mean`**
+Mean steps taken per day: **10766**
 
-Median steps taken per day: **`r day_median`**
+Median steps taken per day: **10765**
 
 
 ### What is the average daily activity pattern?
 
-```{r time-series}
 
+```r
 interval_means <- odata %>%
   group_by(interval) %>%
   summarize(mean = mean(steps, na.rm = TRUE)) %>%
@@ -78,15 +66,17 @@ interval_means %>%
   ggplot(aes(x = interval, y = mean)) +
   geom_line() +
   labs(x = "\nTime interval number", y = "Mean steps taken per 5-min interval\n")
-
-interval_time <- hms::as_hms(interval_max$interval * 60)
-
-detach("package:hms")
-library(lubridate)
-
 ```
 
-The above plot shows the number of steps taken, on average, during each 5-minute interval. During the study period, interval #`r interval_max$interval` was the one during which the most steps were taken--on average, `r interval_max$mean`. Interval #`r interval_max$interval` roughly corresponds to `r interval_time`---`r interval_time + lubridate::minutes(5)`.
+![](PA1_template_files/figure-html/time-series-1.png)<!-- -->
+
+```r
+# 5-min interval with highest mean steps taken, converted to time of day
+# interval_time <- interval_max$interval * 60 %>%
+#   seconds_to_period()
+```
+
+The above plot shows the number of steps taken, on average, during each 5-minute interval. During the study period, interval #835 was the one during which the most steps were taken--on average, 206. Interval #835 roughly corresponds to 13:55:00
 
 
 
