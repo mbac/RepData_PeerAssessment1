@@ -3,17 +3,10 @@ title: 'Reproducible Research: Peer Assessment 1'
 mainfont: SF Pro Display
 sansfont: SF Pro Display Bold
 monofont: Fira Code Retina
-<<<<<<< HEAD
 highlight: textmate
 output:
   pdf_document: 
     latex_engine: lualatex
-=======
-output:
-  pdf_document: 
-    latex_engine: lualatex
-    keep_tex: yes
->>>>>>> cae13b5a56391ecf243b113aefd2ed570d25bf72
     template: eisvogel
   html_document:
     keep_md: yes
@@ -37,7 +30,6 @@ options(digits=1)
 options(scipen=999)
 
 # Default options for code chunks
-<<<<<<< HEAD
 knitr::opts_chunk$set(cache = TRUE,
                       warning = FALSE,
                       message = FALSE,
@@ -46,9 +38,8 @@ knitr::opts_chunk$set(cache = TRUE,
                       out.width = '60%',
                       fig.align = 'center',
                       dev = 'cairo_pdf')
-=======
+
 knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE, dpi = 300)
->>>>>>> cae13b5a56391ecf243b113aefd2ed570d25bf72
 
 #######################################
 # Convenience functions
@@ -112,10 +103,7 @@ daily %>%
 ```
 ------------------------------------------------------------------------
 
-<<<<<<< HEAD
 
-=======
->>>>>>> cae13b5a56391ecf243b113aefd2ed570d25bf72
 ## Mean and median number of steps per day:
 
 ```{r mean-median}
@@ -131,14 +119,10 @@ Median steps taken per day: **`r day_median`**
 
 ------------------------------------------------------------------------
 
-<<<<<<< HEAD
 
 ## What is the average daily activity pattern?
 
-=======
-## What is the average daily activity pattern?
 
->>>>>>> cae13b5a56391ecf243b113aefd2ed570d25bf72
 ```{r time-series, fig.fullwidth = TRUE}
 
 interval_means <- odata %>%
@@ -184,13 +168,11 @@ We will impute missing data with the mean value from the same intervals in remai
 
 Using `data.table` operations mostly as an exercise, but it should also be the fastest option.
 
-<<<<<<< HEAD
-=======
 **Coding environment**
 
 Using `data.table` operations mostly as an exercise, but it should also be the fastest option.
 
->>>>>>> cae13b5a56391ecf243b113aefd2ed570d25bf72
+
 ```{r week-analysis, fig.fullwidth = TRUE}
 # Loading for fast operation when imputing
 library(data.table)
