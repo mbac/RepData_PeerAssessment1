@@ -5,18 +5,20 @@ sansfont: SF Pro Display Bold
 monofont: Fira Code Retina
 highlight: textmate
 output:
-  pdf_document: 
-    latex_engine: lualatex
-  tufte::tufte_handout:
-    latex_engine: xelatex
   html_document:
     keep_md: yes
-    self_contained: yes
+    self_contained: no
+  pdf_document: 
+    latex_engine: xelatex
+    template: eisvogel
+  tufte::tufte_handout:
+    latex_engine: xelatex
 ---
 
 ## Setting up the environment
 
-```{r setup, message=FALSE}
+
+```r
 library(tidyverse)
 library(ggplot2)
 library(lubridate)
@@ -34,7 +36,7 @@ knitr::opts_chunk$set(cache = TRUE,
                       message = FALSE,
                       dpi = 300,
                       echo = TRUE,
-                      out.width = '80%',
+                      out.width = '60%',
                       # dev = 'cairo_pdf',
                       fig.align = 'center')
 
@@ -65,21 +67,20 @@ my_theme <- function(x) {
     panel.spacing.x = unit(1, "cm")
   )
 }
-
 ```
 ## Loading and preprocessing the data
 
-```{r load_data}
 
+```r
 odata <- read_csv('data/activity.csv')
-
 ```
 ------------------------------------------------------------------------
 
 
 ## Histogram of the total number of steps for each day
 
-```{r histo}
+
+```r
 daily <- odata %>%
     group_by(date) %>% 
     summarize(total = sum(steps))
@@ -92,23 +93,24 @@ daily %>%
        y = "No. of days",
        title = "Distribution of daily steps") + 
   my_theme()
-    
 ```
+
+<img src="PA1_template_files/figure-html/histo-1.png" width="60%" style="display: block; margin: auto;" />
 ------------------------------------------------------------------------
 
 
 ## Mean and median number of steps per day:
 
-```{r mean-median}
+
+```r
 # Mean/median values
 day_mean <- mean(daily$total, na.rm = TRUE) %>% round()
 day_median <- median(daily$total, na.rm = TRUE) %>% round()
-
 ```
 
-Mean steps taken per day: **`r day_mean`**
+Mean steps taken per day: **10766**
 
-Median steps taken per day: **`r day_median`**
+Median steps taken per day: **10765**
 
 ------------------------------------------------------------------------
 
@@ -116,8 +118,8 @@ Median steps taken per day: **`r day_median`**
 ## What is the average daily activity pattern?
 
 
-```{r time-series}
 
+```r
 interval_means <- odata %>%
   group_by(interval) %>%
   summarize(mean = mean(steps, na.rm = TRUE)) %>%
@@ -137,23 +139,23 @@ interval_means %>%
        y = "Mean steps taken per 5-min interval\n",
        title = "Mean steps taken per time interval") + 
   my_theme()
-
-# Convert interval code to time
-interval_time <- id_to_time(interval_max$interval)
-
-
-
-
 ```
 
-The above plot shows the number of steps taken, on average, during each 5-minute interval. During the study period, interval \#`r interval_max$interval` was the one during which the most steps were taken--on average, `r interval_max$mean`. Interval \#`r interval_max$interval` corresponds to `r interval_time`.
+<img src="PA1_template_files/figure-html/time-series-1.png" width="60%" style="display: block; margin: auto;" />
+
+```r
+# Convert interval code to time
+interval_time <- id_to_time(interval_max$interval)
+```
+
+The above plot shows the number of steps taken, on average, during each 5-minute interval. During the study period, interval \#835 was the one during which the most steps were taken--on average, 206. Interval \#835 corresponds to 08:35:00.
 
 
 ------------------------------------------------------------------------
 
 ## Imputing missing values
 
-Missing data points: **`r sum(!complete.cases(odata))`**.
+Missing data points: **2304**.
 
 We will impute missing data with the mean value from the same intervals in remaining days. This is under the assumption that there are typical\<- times of the day (e.g., 12 am through 6 am) where an individual is likely to be at rest. We use `data.table` which affords a good combination of execution speed and readability. Column `imputed` in the new dataframe (`impdata`) stores non-missing and imputed values.
 
@@ -161,8 +163,13 @@ We will impute missing data with the mean value from the same intervals in remai
 
 Using `data.table` operations mostly as an exercise, but it should also be the fastest option.
 
+**Coding environment**
 
-```{r week-analysis}
+Using `data.table` operations mostly as an exercise, but it should also be the fastest option.
+
+
+
+```r
 # Loading for fast operation when imputing
 library(data.table)
 
@@ -189,8 +196,9 @@ histdata %>%
        title = "Distribution of steps taken daily with imputed missing data"
        ) +
   my_theme()
-
 ```
+
+<img src="PA1_template_files/figure-html/week-analysis-1.png" width="60%" style="display: block; margin: auto;" />
 
 
 
@@ -199,8 +207,8 @@ histdata %>%
 
 To answer this question, we will use imputed data and convert the dates to a "day-of-the-week" integer (*i.e.*, Monday = 1, Tuesday = 2, *etc...*). We'll then plot the mean steps taken per 5-minute interval during weekdays and weekends.
 
-```{r weekday-plot}
 
+```r
 # Get day-of-the-week and mark each row as "Weekdays" or "Weekends" (factor)
 weekdata <- setDT(copy(impdata))
 weekdata[, `:=`(day = as.integer(strftime(date, '%u')))]
@@ -232,3 +240,5 @@ ggplot(aes(x = time, y = mean_steps)) +
   my_theme() +
   theme(axis.text.x = element_text(size = 8))
 ```
+
+<img src="PA1_template_files/figure-html/weekday-plot-1.png" width="60%" style="display: block; margin: auto;" />
