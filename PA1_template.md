@@ -1,20 +1,77 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: 'Reproducible Research: Peer Assessment 1'
+mainfont: SF Pro Display
+sansfont: SF Pro Display Bold
+monofont: Fira Code Retina
+highlight: textmate
+output:
   html_document:
-    keep_md: true
+    keep_md: yes
+    self_contained: no
+  tufte::tufte_handout:
+    latex_engine: lualatex
+  pdf_document: 
+    latex_engine: lualatex
+    template: eisvogel
 ---
 
+## Setting up the environment
 
 
-### Loading and preprocessing the data
+```r
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(tufte)
+
+# Reduce precision (we're working with actual steps, after all) and disable
+# scientific notation (for now)
+options(digits=1)
+# Big penalty to bias against switch to scientific notation
+options(scipen=999)
+
+# Default options for code chunks
+knitr::opts_chunk$set(cache = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      dpi = 300,
+                      echo = TRUE)
+
+#######################################
+# Convenience functions
+#######################################
+# Convert interval code to time
+id_to_time <- function(id) {
+  id %>%
+    as.character() %>%
+    str_pad(width = 4,
+            side = 'left',
+            pad = "0") %>%
+    readr::parse_time(format = '%H%M')
+}
+
+# Plot theme
+my_theme <- function(x) {
+  
+    theme(
+    strip.text = element_text(size = 12, hjust = 0.5, face = "bold"),
+    plot.title = element_text(hjust = 0.5, size = 18),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    panel.spacing.x = unit(1, "cm")
+  )
+}
+```
+
+## Loading and preprocessing the data
 
 
 ```r
 odata <- read_csv('data/activity.csv')
 ```
 
-### Histogram of the total number of steps for each day
+## Histogram of the total number of steps for each day
 
 
 ```r
@@ -34,7 +91,7 @@ daily %>%
 
 ![](PA1_template_files/figure-html/histo-1.png)<!-- -->
 
-### Mean and median number of steps per day:
+## Mean and median number of steps per day:
 
 
 ```r
@@ -49,7 +106,7 @@ Mean steps taken per day: **10766**
 Median steps taken per day: **10765**
 
 
-### What is the average daily activity pattern?
+## What is the average daily activity pattern?
 
 
 ```r
@@ -84,11 +141,15 @@ interval_time <- id_to_time(interval_max$interval)
 The above plot shows the number of steps taken, on average, during each 5-minute interval. During the study period, interval #835 was the one during which the most steps were taken--on average, 206. Interval #835 corresponds to 08:35:00.
 
 
-### Imputing missing values
+## Imputing missing values
 
 Missing data points: **2304**.
 
 We will impute missing data with the mean value from the same intervals in remaining days. This is under the assumption that there are typical<- times of the day (e.g., 12 am through 6 am) where an individual is likely to be at rest. We use `data.table` which affords a good combination of execution speed and readability. Column `imputed` in the new dataframe (`impdata`) stores non-missing and imputed values.
+
+**Coding environment**
+
+Using `data.table` operations mostly as an exercise, but it should also be the fastest option.
 
 
 ```r
@@ -103,8 +164,7 @@ impdata <-setDT(odata)
 
 impdata[,
         imputed := impute.mean(steps),
-        by = interval,
-        .SDcols = 'steps']
+        by = interval]
 
 # On a copy of the data, group by day and sum daily steps
 histdata <- impdata[,
@@ -121,7 +181,7 @@ histdata %>%
   my_theme()
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
+![](PA1_template_files/figure-html/week-analysis-1.png)<!-- -->
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -136,45 +196,30 @@ weekdata[, `:=`(day = as.integer(strftime(date, '%u')))]
 weekdata[, `:=`(type = ifelse(day > 5, "Weekends", "Weekdays"))]
 weekdata[, type := as.factor(type)]
 
+# Time formatting function
+time_label <- function(x) {strftime(x, '%H:%M')}
+
 # Compute mean values for each 5 min-interval
 weekdata[, `:=`(mean_steps = mean(imputed, na.rm = TRUE),
                 time = id_to_time(interval)),
      by = .(interval, type)]
 # Select columns we're interested in
-cols = c('date', 'interval', 'time', 'mean_steps', 'type')
+cols = c('date', 'time', 'mean_steps')
 # Aggregate for plotting
-weekdata[, .SD[1L], by = .(interval, type), .SDcols = cols]
-```
-
-```
-##      interval     type       date interval     time mean_steps     type
-##   1:        0 Weekdays 2012-10-01        0 00:00:00       2.25 Weekdays
-##   2:        5 Weekdays 2012-10-01        5 00:05:00       0.45 Weekdays
-##   3:       10 Weekdays 2012-10-01       10 00:10:00       0.17 Weekdays
-##   4:       15 Weekdays 2012-10-01       15 00:15:00       0.20 Weekdays
-##   5:       20 Weekdays 2012-10-01       20 00:20:00       0.10 Weekdays
-##  ---                                                                   
-## 572:     2335 Weekends 2012-10-06     2335 23:35:00      11.59 Weekends
-## 573:     2340 Weekends 2012-10-06     2340 23:40:00       6.29 Weekends
-## 574:     2345 Weekends 2012-10-06     2345 23:45:00       1.71 Weekends
-## 575:     2350 Weekends 2012-10-06     2350 23:50:00       0.03 Weekends
-## 576:     2355 Weekends 2012-10-06     2355 23:55:00       0.13 Weekends
-```
-
-```r
-# Plot by panel
-weekdata %>% ggplot(aes(x = time, y = mean_steps)) +
-  geom_line() + 
-  facet_wrap(vars(type), labeller = label_value) + 
-  labs(x = "Time of day (in 5-min increments)",
+weekdata[, .SD[1L], by = .(interval, type), .SDcols = cols] %>%
+  
+ggplot(aes(x = time, y = mean_steps)) +
+  geom_line() +
+  facet_wrap(vars(type), labeller = label_value) +
+  labs(x = "\nTime of day",
        y = "Steps taken",
-       title = "Comparison of mean steps taken per interval, according to week day",
-       subtitle = "Interval IDs converted to time") + 
-  theme(
-    strip.text = element_text(size = 12, hjust = 0.5, face = "bold"),
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5, face = "italic")
-  )
+       title = "Comparison of mean steps taken per interval,\n by weekday",
+       subtitle = "Interval IDs converted to time") +
+  scale_x_time(labels = time_label,
+               breaks = scales::breaks_width('3 hours'),
+               expand = expansion()) +
+  my_theme() +
+  theme(axis.text.x = element_text(size = 8))
 ```
 
 ![](PA1_template_files/figure-html/weekday-plot-1.png)<!-- -->
